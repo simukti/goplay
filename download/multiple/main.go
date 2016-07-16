@@ -18,7 +18,7 @@ type Result struct {
 	filename string
 	url      string
 	err      error
-	file     os.FileInfo
+	file     *os.FileInfo
 	time     float64
 }
 
@@ -33,15 +33,7 @@ func main() {
 		"https://httpbin.org/image/jpeg",
 	}
 
-	results := download(urls)
-
-	for _, r := range results {
-		if r.err != nil {
-			fmt.Println(fmt.Sprintf("%s error: %s", r.filename, r.err.Error()))
-		} else {
-			fmt.Println(fmt.Sprintf("%s downloaded in %f seconds", r.filename, r.time))
-		}
-	}
+	download(urls)
 }
 
 func download(urls []string) []*Result {
@@ -95,10 +87,15 @@ func download(urls []string) []*Result {
 			}
 
 			f, _ := os.Stat(fname)
-			res.file = f
-
+			res.file = &f
 			end := time.Now()
 			res.time = end.Sub(start).Seconds()
+
+			if res.err != nil {
+				fmt.Println(fmt.Sprintf("%s error: %s", res.filename, res.err.Error()))
+			} else {
+				fmt.Println(fmt.Sprintf("%s downloaded in %f seconds", res.filename, res.time))
+			}
 
 			recv <- res
 		}(u)
