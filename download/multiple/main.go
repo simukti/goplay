@@ -23,7 +23,7 @@ type Result struct {
 }
 
 var (
-	timeoutPerDownload = time.After(30 * time.Second)
+	downloadTimeout = time.Duration(3)
 )
 
 func main() {
@@ -82,8 +82,8 @@ func download(urls []string) []*Result {
 				if err != nil {
 					res.err = err
 				}
-			case <-timeoutPerDownload:
-				res.err = errors.New(fmt.Sprintf("Download timeout on %s", u))
+			case <-time.After(downloadTimeout * time.Second):
+				res.err = errors.New(fmt.Sprintf("\t>>> Download timeout : %s", u))
 			}
 
 			f, _ := os.Stat(fname)
@@ -92,7 +92,7 @@ func download(urls []string) []*Result {
 			res.time = end.Sub(start).Seconds()
 
 			if res.err != nil {
-				fmt.Println(fmt.Sprintf("%s error: %s", res.filename, res.err.Error()))
+				fmt.Println(res.err.Error())
 			} else {
 				fmt.Println(fmt.Sprintf("%s downloaded in %f seconds", res.filename, res.time))
 			}
