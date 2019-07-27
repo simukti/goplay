@@ -15,33 +15,38 @@ import (
 
 func main() {
 	u := "https://httpbin.org/robots.txt"
-	url, _ := url.Parse(u)
-	fname := filepath.Join(os.TempDir(), filepath.Base(url.Path))
+	urlParse, _ := url.Parse(u)
+	fname := filepath.Join(os.TempDir(), filepath.Base(urlParse.Path))
 	o, oErr := os.Create(fname)
 	if oErr != nil {
 		log.Fatalln(oErr)
+		return
 	}
 	defer o.Close()
+	defer os.Remove(fname)
 
 	r, rErr := http.Get(u)
 	if rErr != nil {
 		log.Fatalln(rErr)
-		os.Remove(fname)
+		return
 	}
 
 	if r.StatusCode != http.StatusOK {
 		log.Fatalln("Remote file inaccessible")
-		os.Remove(fname)
+		return
 	}
 	defer r.Body.Close()
 
 	if _, dErr := io.Copy(o, r.Body); dErr != nil {
 		log.Fatalln(dErr)
-		os.Remove(fname)
+		return
 	}
 
-	f, _ := os.Stat(fname)
+	f, err := os.Stat(fname)
+	if err != nil {
+		log.Fatalln(err)
+		return
+	}
 
 	fmt.Println(fmt.Sprintf("Filename\t: %s\nSize\t\t: %d byte\nFiletime\t: %s", f.Name(), f.Size(), f.ModTime().String()))
-	os.Remove(fname)
 }
